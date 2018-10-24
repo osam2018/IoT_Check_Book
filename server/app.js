@@ -13,8 +13,18 @@ db.once('open', function(){
     console.log("Connected to mongod server");
 });
 
-mongoose.connect('mongodb://localhost:27017/rent', { useNewUrlParser : true});
+mongoose.connect('mongodb://54.180.66.63:52865/rent', { useNewUrlParser : true});
 //mongo --host 54.180.66.63:52865
+
+// Serial
+var SerialPort = require('serialport');
+var Readline = require('@serialport/parser-readline');
+var port = new SerialPort('COM3');
+var parser = new Readline();
+
+port.pipe(parser);
+
+var serial_data = [];
 
 app.use(bodyParser.urlencoded({ extended : false }));
 app.use(bodyParser.json());
@@ -47,3 +57,38 @@ app.use(function (req, res, next) {
 app.listen(8080, function () {
 	console.log('start server');
 });
+
+//
+parser.on('data', function (data) {
+  data = data.trim();
+
+	if (data == 'end') {
+		data_parse(serial_data);
+		serial_data = [];
+
+		console.log('end');
+	} else if (data == 'cancle') {
+
+	} else {
+		serial_data.push(data);
+	}
+});
+
+function data_parse (data) {
+	var d = {};
+
+	if (data.length == 3) {
+		d = {
+			type : data[0],
+			number : data[1],
+			book_number : data[2]
+		};
+	} else {
+		d = {
+			type : data[0],
+			book_number : data[1]
+		};
+	}
+
+	console.log(d);
+}
