@@ -1,38 +1,49 @@
 var express = require('express');
 var app = express();
+var fs = require('fs');
 
-var SerialPort = require('serialport');
-var Readline = require('@serialport/parser-readline');
-var port = new SerialPort('/dev/tty', {
-	baudRate : 9600
+// BodyParser
+var bodyParser = require('body-parser');
+
+// mongoose
+var mongoose = require('mongoose');
+var db = mongoose.connection;
+db.on('error', console.error);
+db.once('open', function(){
+    console.log("Connected to mongod server");
 });
-var parser = port.pipe(new Readline({ delimiter : '\n' }));
+
+mongoose.connect('mongodb://localhost:27017/rent', { useNewUrlParser : true});
+//mongo --host 54.180.66.63:52865
+
+app.use(bodyParser.urlencoded({ extended : false }));
+app.use(bodyParser.json());
+
+var path = require('path');
+
+// Controllers
+fs.readdirSync('./controllers').forEach(function (file) {
+    if (file.substr(-3) == '.js') {
+        var path = file.substring(0, file.length - 3);
+        var router = express.Router();
+        var controller = require('./controllers/' + path)(router);
+        app.use('/' + path, controller);
+    }
+});
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
 app.get('/', function (req, res) {
-  res.send('Hello World!');
+	res.send('Hello World!');
 });
 
-app.listen(3000, function () {
-  console.log('Example app listening on port 3000!');
+app.use(function (req, res, next) {
+	res.status(404).render('404', { url : req.originalUrl });
 });
 
-parser.on('open', function () {
-	console.log('open serial');
+app.listen(8080, function () {
+	console.log('start server');
 });
-
-parser.on('error', function (err) {
-	console.log('error serial');
-});
-
-parser.on('data', function (data) {
-	console.log('Read Data : ' + data);
-});
-
-/*
-const SerialPort = require('serialport')
-const Readline = require('@serialport/parser-readline')
-const port = new SerialPort('/dev/tty-usbserial1')
-
-const parser = port.pipe(new Readline({ delimiter: '\r\n' }))
-parser.on('data', console.log)
-*/
