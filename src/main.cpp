@@ -1,10 +1,12 @@
 #include <Arduino.h>
 
 #include <Keypad.h>
-#include <LiquidCrystal.h>
+//#include <LiquidCrystal.h>
+#include <LiquidCrystal_I2C.h>
 
 // lcd init
-LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
+//LiquidCrystal lcd(14, 15, 16, 17, 18, 19);
+LiquidCrystal_I2C lcd(0x3F, 16, 2);
 
 // keypad init
 const byte ROWS = 4;    // 행(rows) 개수
@@ -42,7 +44,9 @@ void setLedRGB_Blink(int r, int g, int b, int n, int t);
 
 void setup() {
 	Serial.begin(9600);
-	lcd.begin(16, 2);
+	//lcd.begin(16, 2);
+	lcd.begin();
+	lcd.backlight();
 	
 	pinMode(10, OUTPUT);
 	pinMode(11, OUTPUT);
@@ -78,7 +82,7 @@ int main_menu(char key) {
 	lcd.setCursor(0, 0);
 	lcd.print("A. rent / B. return");
 	lcd.setCursor(0, 1);
-	lcd.print("C, find");
+	lcd.print("C. find");
 	
 	setLedRGB(0, 255, 0);
 	
