@@ -12,7 +12,7 @@ db.on('error', console.error);
 db.once('open', function(){
     console.log("Connected to mongod server");
 });
-const mongodb_url = 'localhost';
+const mongodb_url = '13.251.102.127';
 const mongodb_port = 27017;
 
 mongoose.connect('mongodb://' + mongodb_url + ':' + mongodb_port + '/rent?authSource=admin', { useNewUrlParser : true});
@@ -22,7 +22,7 @@ mongoose.connect('mongodb://' + mongodb_url + ':' + mongodb_port + '/rent?authSo
 // Serial
 var SerialPort = require('serialport');
 var Readline = require('@serialport/parser-readline');
-var port = new SerialPort('/dev/ttyS0');
+var port = new SerialPort('/dev/COM3');
 var parser = new Readline();
 
 port.pipe(parser);
@@ -63,6 +63,8 @@ app.listen(80, function () {
 
 // Serial
 var user = require('./models/user.js');
+var book = require('./models/book.js');
+var rent = require('./models/rent.js');
 
 parser.on('data', function (data) {
   data = data.trim();
@@ -70,10 +72,26 @@ parser.on('data', function (data) {
 	if (data == 'end') {
 		serial_data = data_parse(serial_data);
 		
-		if (find_user(serial_data.number) && find_book(serial_data.booknumber)) {
-			parser.write('true');
-			console.log('write : true');
-		}
+		var conditions = {};
+		
+		conditions = {
+			number : serial_data.number
+		};
+		
+		user.find(conditions, function (err, result) {
+			if (result.length > 0) {
+				conditions = {
+					number : serial_data.number
+				};
+				
+				book.find(conditions, function (err, result) {
+					if (result.length > 0) {
+						parser.write('true');
+						console.log('write : true');
+					}
+				});
+			}
+		});
 		
 		serial_data = [];
 
@@ -102,6 +120,8 @@ function data_parse (data) {
 	}
 
 	console.log(d);
+	
+	return d;
 }
 
 function find_user (number) {
@@ -110,7 +130,7 @@ function find_user (number) {
 	};
 	
 	user.find(conditions, function (err, result) {
-		if (result.ok == 1) {
+		if (result.length > 0) {
 			return true;
 		}
 	});
@@ -124,8 +144,10 @@ function find_book (number) {
 	};
 	
 	book.find(conditions, function (err, result) {
-		if (result.ok == 1) {
+		if (result.length > 0) {
 			return true;
 		}
 	});
+	
+	return false;
 }
