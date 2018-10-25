@@ -12,17 +12,16 @@ db.on('error', console.error);
 db.once('open', function(){
     console.log("Connected to mongod server");
 });
-const mongodb_url = '13.251.102.127';
+const mongodb_url = 'localhost';
 const mongodb_port = 27017;
 
-mongoose.connect('mongodb://' + mongodb_url + ':' + mongodb_port + '/rent?authSource=admin', { useNewUrlParser : true});
-//mongo --host 13.124.195.10:55492
+mongoose.connect('mongodb://' + mongodb_url + ':' + mongodb_port + '/rent', { useNewUrlParser : true});
 // mongodb://osam:osam@localhost:27017/rent?authSource=admin
 
 // Serial
 var SerialPort = require('serialport');
 var Readline = require('@serialport/parser-readline');
-var port = new SerialPort('/dev/COM3');
+var port = new SerialPort('COM3');
 var parser = new Readline();
 
 port.pipe(parser);
@@ -68,34 +67,45 @@ var rent = require('./models/rent.js');
 
 parser.on('data', function (data) {
   data = data.trim();
+  console.log(data);
 
 	if (data == 'end') {
-		serial_data = data_parse(serial_data);
-		
+    var parse_data = data_parse(serial_data);
+
+    console.log(parse_data);//
+
 		var conditions = {};
-		
+
 		conditions = {
-			number : serial_data.number
+			number : parse_data.number
 		};
-		
+
 		user.find(conditions, function (err, result) {
+      console.log('find user');//
 			if (result.length > 0) {
 				conditions = {
-					number : serial_data.number
+					number : parse_data.book_number
 				};
-				
+
+        console.log(conditions);
+
 				book.find(conditions, function (err, result) {
+          console.log('find book');//
 					if (result.length > 0) {
-						parser.write('true');
+            console.log(result[0].shelf);
+            port.write(result[0].shelf.toString());
 						console.log('write : true');
+					} else {
+						port.write('x');
+            console.log('write : false');
 					}
 				});
+			} else {
+				parser.write('x');
 			}
 		});
-		
-		serial_data = [];
 
-		console.log('end');
+		serial_data = [];
 	} else if (data == 'cancle') {
 
 	} else {
@@ -120,7 +130,7 @@ function data_parse (data) {
 	}
 
 	console.log(d);
-	
+
 	return d;
 }
 
@@ -128,13 +138,13 @@ function find_user (number) {
 	var conditions = {
 		number : number
 	};
-	
+
 	user.find(conditions, function (err, result) {
 		if (result.length > 0) {
 			return true;
 		}
 	});
-	
+
 	return false;
 }
 
@@ -142,12 +152,12 @@ function find_book (number) {
 	var conditions = {
 		number : number
 	};
-	
+
 	book.find(conditions, function (err, result) {
 		if (result.length > 0) {
 			return true;
 		}
 	});
-	
+
 	return false;
 }

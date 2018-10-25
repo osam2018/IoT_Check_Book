@@ -10,7 +10,11 @@ var bookSchema = new Schema({
     name : {
         type : String,
         required : true
-    }
+    },
+	shelf : {
+		type : Number,
+		required : true
+	}
 }, {
     versionKey : false
 });
