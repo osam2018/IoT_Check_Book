@@ -8,7 +8,11 @@ module.exports = function (router) {
 };
 
 function getBook (req, res) {
-	res.send('bookDB');
+	var conditions = {};
+
+	book.find(conditions, function (err, result) {
+		res.send(result);
+	});
 }
 
 function insertBook (req, res) {
