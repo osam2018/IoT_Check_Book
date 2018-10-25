@@ -101,7 +101,7 @@ parser.on('data', function (data) {
 					}
 				});
 			} else {
-				parser.write('x');
+				port.write('x');
 			}
 		});
 
