@@ -12,14 +12,17 @@ db.on('error', console.error);
 db.once('open', function(){
     console.log("Connected to mongod server");
 });
+const mongodb_url = 'localhost';
+const mongodb_port = 27017;
 
-mongoose.connect('mongodb://54.180.66.63:52865/rent', { useNewUrlParser : true});
-//mongo --host 54.180.66.63:52865
+mongoose.connect('mongodb://' + mongodb_url + ':' + mongodb_port + '/rent?authSource=admin', { useNewUrlParser : true});
+//mongo --host 13.124.195.10:55492
+// mongodb://osam:osam@localhost:27017/rent?authSource=admin
 
 // Serial
 var SerialPort = require('serialport');
 var Readline = require('@serialport/parser-readline');
-var port = new SerialPort('COM3');
+var port = new SerialPort('/dev/ttyS0');
 var parser = new Readline();
 
 port.pipe(parser);
@@ -54,16 +57,24 @@ app.use(function (req, res, next) {
 	res.status(404).render('404', { url : req.originalUrl });
 });
 
-app.listen(8080, function () {
+app.listen(80, function () {
 	console.log('start server');
 });
 
-//
+// Serial
+var user = require('./models/user.js');
+
 parser.on('data', function (data) {
   data = data.trim();
 
 	if (data == 'end') {
-		data_parse(serial_data);
+		serial_data = data_parse(serial_data);
+		
+		if (find_user(serial_data.number) && find_book(serial_data.booknumber)) {
+			parser.write('true');
+			console.log('write : true');
+		}
+		
 		serial_data = [];
 
 		console.log('end');
@@ -91,4 +102,30 @@ function data_parse (data) {
 	}
 
 	console.log(d);
+}
+
+function find_user (number) {
+	var conditions = {
+		number : number
+	};
+	
+	user.find(conditions, function (err, result) {
+		if (result.ok == 1) {
+			return true;
+		}
+	});
+	
+	return false;
+}
+
+function find_book (number) {
+	var conditions = {
+		number : number
+	};
+	
+	book.find(conditions, function (err, result) {
+		if (result.ok == 1) {
+			return true;
+		}
+	});
 }

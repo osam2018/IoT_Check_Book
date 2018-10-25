@@ -27,7 +27,8 @@ enum {
 	STATE_IDLE = 0,
 	STATE_MAIN,
 	STATE_INPUT_BOOKNUMBER,
-	STATE_INPUT_NUMBER
+	STATE_INPUT_NUMBER,
+	STATE_RECV
 };
 
 int state = STATE_MAIN;
@@ -37,6 +38,7 @@ char buf[14];
 int main_menu(char key);
 int input_number(char key);
 int input_booknumber(char key);
+int recv_data();
 bool getNumber(char key);
 bool getBookNumber(char key);
 void setLedRGB(int r, int g, int b);
@@ -53,11 +55,15 @@ void setup() {
 	pinMode(12, OUTPUT);
 	
 	pinMode(13, OUTPUT);
+	
+	pinMode(14, OUTPUT);
 }
 
 void loop() {
 	char key = keypad.getKey();
 	int prev_state = state;
+	
+	digitalWrite(14, HIGH);
 	
 	switch (state) {
 		case STATE_MAIN :
@@ -68,6 +74,9 @@ void loop() {
 			break;
 		case STATE_INPUT_NUMBER:
 			state = input_number(key);
+			break;
+		case STATE_RECV:
+			state = recv_data();
 			break;
 	}
 	
@@ -121,7 +130,23 @@ int input_booknumber(char key) {
 	if (getBookNumber(key)) {
 		Serial.println(buf);
 		
-		return STATE_MAIN;
+		return STATE_RECV;
+	}
+	
+	return STATE_IDLE;
+}
+
+int recv_data() {
+	if (Serial.available() > 0) {
+		char ch = Serial.read();
+		
+		if (ch == 'o') {
+			lcd.setCursor(0, 0);
+			lcd.print("Success");
+		} else if (ch == 'x') {
+			lcd.setCursor(0, 0);
+			lcd.print("Fail");
+		}
 	}
 	
 	return STATE_IDLE;
