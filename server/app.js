@@ -72,29 +72,59 @@ parser.on('data', function (data) {
 	if (data == 'end') {
     var parse_data = data_parse(serial_data);
 
-    console.log(parse_data);//
-
 		var conditions = {};
 
 		conditions = {
 			number : parse_data.number
 		};
 
-		user.find(conditions, function (err, result) {
-      console.log('find user');//
-			if (result.length > 0) {
+		user.find(conditions, function (err, user_result) {
+			if (user_result.length > 0) {
 				conditions = {
 					number : parse_data.book_number
 				};
 
-        console.log(conditions);
+				book.find(conditions, function (err, book_result) {
+					if (book_result.length > 0) {
+            if (parse_data.type == 'rent') {
+              var data = new rent()
 
-				book.find(conditions, function (err, result) {
-          console.log('find book');//
-					if (result.length > 0) {
-            console.log(result[0].shelf);
-            port.write(result[0].shelf.toString());
-						console.log('write : true');
+              data.user = user_result[0]._id;
+              data.book = book_result[0]._id;
+
+              data.save(function (err) {
+                if (err) {
+                  console.log('rent error');
+                } else {
+                  console.log('rent success');
+                  port.write(book_result[0].shelf.toString());
+      						console.log('write : true');
+                }
+              });
+            } else if (parse_data.type == 'return') {
+              conditions = {
+                user : user_result[0]._id,
+                book : book_result[0]._id
+              };
+
+              rent.find(conditions, function (err, rent_result) {
+                if (rent_result.length > 0) {
+                  var data = rent_result[0];
+
+                  data.return = new Date();
+
+                  conditions = {
+                    _id : data._id
+                  };
+
+                  rent.updateOne(conditions, data, function (err, result) {
+                    console.log('return success');
+                    port.write(book_result[0].shelf.toString());
+        						console.log('write : true');
+                  });
+                }
+              });
+            }
 					} else {
 						port.write('x');
             console.log('write : false');
@@ -102,6 +132,7 @@ parser.on('data', function (data) {
 				});
 			} else {
 				port.write('x');
+        console.log('write : false');
 			}
 		});
 

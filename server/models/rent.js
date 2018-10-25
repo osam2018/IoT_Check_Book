@@ -4,12 +4,12 @@ var ObjectId = Schema.Types.ObjectId;
 
 var rentSchema = new Schema({
 	user : {
-		type : String,
+		type : ObjectId,
 		ref : 'user',
 		required : true
 	},
 	book : {
-		type : String,
+		type : ObjectId,
 		ref : 'book',
 		required : true
 	},
